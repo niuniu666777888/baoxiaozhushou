@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>青禾报销助手 · Demo</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#127805;</text></svg>">
+<style>
+  :root{
+    --brand:#0e9f6e;
+    --brand-dark:#0b7d56;
+    --brand-soft:#e7f6f0;
+    --ink:#1f2937;
+    --ink-2:#4b5563;
+    --ink-3:#9ca3af;
+    --line:#e5e7eb;
+    --bg:#f4f6f8;
+    --user:#0e9f6e;
+    --bot:#ffffff;
+    --warn:#d97706;
+    --danger:#dc2626;
+    --info:#2563eb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,-apple-system,sans-serif;
+    background:var(--bg);color:var(--ink);
+    display:flex;flex-direction:column;height:100vh;
+  }
+  /* ===== 顶栏 ===== */
+  header{
+    background:#fff;border-bottom:1px solid var(--line);
+    padding:12px 20px;display:flex;align-items:center;gap:12px;
+  }
+  .logo{
+    width:36px;height:36px;border-radius:9px;background:var(--brand);
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:18px;
+  }
+  .title{flex:1;min-width:0}
+  .title h1{font-size:16px;font-weight:600}
+  .title p{font-size:12px;color:var(--ink-3);margin-top:2px}
+  .login-btn{
+    border:1px solid var(--brand);color:var(--brand);background:#fff;
+    padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;
+    transition:.15s;
+  }
+  .login-btn:hover{background:var(--brand-soft)}
+  .user-chip{
+    display:none;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);
+    background:var(--brand-soft);padding:6px 12px;border-radius:20px;
+  }
+  .user-chip .dot{width:8px;height:8px;border-radius:50%;background:var(--brand)}
+  .user-chip button{
+    border:none;background:none;color:var(--ink-3);cursor:pointer;font-size:12px;text-decoration:underline;
+  }
+  /* ===== 聊天区 ===== */
+  main{flex:1;overflow-y:auto;padding:24px 0}
+  .wrap{max-width:780px;margin:0 auto;padding:0 20px}
+  .msg{display:flex;margin-bottom:18px;gap:10px;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .avatar{
+    width:34px;height:34px;border-radius:8px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;
+  }
+  .msg.bot .avatar{background:var(--brand-soft);color:var(--brand-dark)}
+  .msg.user{flex-direction:row-reverse}
+  .msg.user .avatar{background:#eef2ff;color:var(--info)}
+  .bubble{
+    max-width:78%;padding:12px 14px;border-radius:12px;font-size:14px;line-height:1.7;
+  }
+  .msg.bot .bubble{background:#fff;border:1px solid var(--line);border-top-left-radius:4px}
+  .msg.user .bubble{background:var(--user);color:#fff;border-top-right-radius:4px}
+  .src{
+    margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);
+    font-size:12px;color:var(--ink-3);
+  }
+  .src b{color:var(--brand-dark);font-weight:600}
+  /* 快捷 chips */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 20px 44px}
+  .chip{
+    border:1px solid var(--line);background:#fff;border-radius:16px;
+    padding:6px 12px;font-size:12.5px;color:var(--ink-2);cursor:pointer;transition:.15s;
+  }
+  .chip:hover{border-color:var(--brand);color:var(--brand)}
+  /* ===== 单据卡片 ===== */
+  .doc-card{
+    background:#fafbfc;border:1px solid var(--line);border-radius:10px;
+    padding:12px 14px;margin-top:10px;
+  }
+  .doc-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px}
+  .doc-row + .doc-row{border-top:1px dashed var(--line)}
+  .doc-row .k{color:var(--ink-3)}
+  .doc-row .v{font-weight:500}
+  .badge{
+    font-size:11px;padding:2px 9px;border-radius:10px;font-weight:500;
+  }
+  .b-pending{background:#fef3c7;color:var(--warn)}
+  .b-finance{background:#dbeafe;color:var(--info)}
+  .b-done{background:var(--brand-soft);color:var(--brand-dark)}
+  .b-reject{background:#fee2e2;color:var(--danger)}
+  .flow{
+    display:flex;align-items:center;gap:4px;margin-top:8px;font-size:11px;color:var(--ink-3);
+  }
+  .flow .step{padding:2px 6px;border-radius:4px;background:#f3f4f6}
+  .flow .step.on{background:var(--brand);color:#fff}
+  .flow .arrow{color:var(--line)}
+  /* ===== 输入区 ===== */
+  footer{
+    border-top:1px solid var(--line);background:#fff;padding:14px 20px;
+  }
+  .input-bar{max-width:780px;margin:0 auto;display:flex;gap:10px;align-items:flex-end}
+  .input-bar textarea{
+    flex:1;border:1px solid var(--line);border-radius:10px;padding:11px 14px;
+    font-size:14px;resize:none;height:46px;font-family:inherit;outline:none;line-height:1.4;
+  }
+  .input-bar textarea:focus{border-color:var(--brand)}
+  .send-btn{
+    background:var(--brand);color:#fff;border:none;border-radius:10px;
+    padding:0 20px;height:46px;font-size:14px;cursor:pointer;
+  }
+  .send-btn:hover{background:var(--brand-dark)}
+  .hint{max-width:780px;margin:6px auto 0;font-size:11px;color:var(--ink-3)}
+  /* ===== 登录模态 ===== */
+  .mask{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);
+    align-items:center;justify-content:center;z-index:50;
+  }
+  .mask.show{display:flex}
+  .modal{
+    background:#fff;border-radius:14px;padding:24px;width:360px;max-width:90vw;
+  }
+  .modal h3{font-size:16px;margin-bottom:6px}
+  .modal p{font-size:12.5px;color:var(--ink-3);margin-bottom:16px;line-height:1.6}
+  .emp{
+    display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;margin-bottom:8px;cursor:pointer;transition:.15s;
+  }
+  .emp:hover{border-color:var(--brand);background:var(--brand-soft)}
+  .emp .e-avatar{width:34px;height:34px;border-radius:50%;background:var(--brand-soft);
+    color:var(--brand-dark);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px}
+  .emp .e-name{font-size:14px;font-weight:500}
+  .emp .e-dept{font-size:12px;color:var(--ink-3)}
+  .modal .cancel{
+    width:100%;margin-top:8px;border:none;background:none;color:var(--ink-3);
+    padding:8px;cursor:pointer;font-size:13px;
+  }
+  /* typing dot */
+  .typing{display:inline-flex;gap:4px;padding:6px 2px}
+  .typing span{width:6px;height:6px;border-radius:50%;background:var(--ink-3);animation:t 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.2s}
+  .typing span:nth-child(3){animation-delay:.4s}
+  @keyframes t{0%,60%,100%{opacity:.3}30%{opacity:1}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">禾</div>
+  <div class="title">
+    <h1>青禾报销助手</h1>
+    <p>制度问答 · 单据状态查询 · 内部演示 Demo</p>
+  </div>
+  <button class="login-btn" id="loginBtn">员工登录（授权）</button>
+  <div class="user-chip" id="userChip">
+    <span class="dot"></span><span id="userName"></span>
+    <button id="logoutBtn">退出</button>
+  </div>
+</header>
+
+<main>
+  <div class="wrap" id="chat"></div>
+</main>
+
+<footer>
+  <div class="input-bar">
+    <textarea id="input" placeholder="问点什么？例如：出差住宿标准是多少？我的报销单批到哪了？"></textarea>
+    <button class="send-btn" id="sendBtn">发送</button>
+  </div>
+  <div class="hint">Demo 数据为内置 mock，制度与单据均为示例。问制度无需登录；查本人单据需先点右上角"员工登录"授权。</div>
+</footer>
+
+<div class="mask" id="mask">
+  <div class="modal">
+    <h3>选择以哪位员工身份进入</h3>
+    <p>授权后，助手仅可查询<b>该员工本人</b>的报销单据状态，不可见他人数据。</p>
+    <div id="empList"></div>
+    <button class="cancel" id="cancelLogin">取消</button>
+  </div>
+</div>
+
+<script>
+/* ================= Mock 数据 ================= */
+// 报销制度库（Demo：关键词匹配，模拟 RAG 检索）
+const POLICIES = [
+  {
+    keys:["住宿","酒店","房费","一线城市","标准"],
+    q:"出差住宿标准是多少？",
+    a:"出差住宿费按城市分级限额报销：\n• 一线城市（北上广深）：≤ 500 元/晚；\n• 其他城市：≤ 400 元/晚。\n超标部分原则上自理，特殊情况需总经理审批。",
+    src:"《青禾差旅费管理办法》第 4.2 条"
+  },
+  {
+    keys:["餐补","吃饭","餐饮补贴","一天多少钱"],
+    q:"出差餐补一天多少钱？",
+    a:"出差期间餐补按 100 元/天发放，无需提供发票，按实际出差自然天数计算。当日有招待费的餐次不再重复享受餐补。",
+    src:"《青禾差旅费管理办法》第 5.1 条"
+  },
+  {
+    keys:["打车","市内交通","出租车","滴滴","交通"],
+    q:"市内打车能报销吗？",
+    a:"出差期间市内交通费凭正规票据实报实销，单日上限 150 元/人。机场往返建议优先乘坐公共交通；夜间（22:00 后）打车可正常报销。",
+    src:"《青禾差旅费管理办法》第 4.4 条"
+  },
+  {
+    keys:["发票","抬头","税号","增值税","票据"],
+    q:"报销对发票有什么要求？",
+    a:"发票要求：\n• 抬头：青禾科技有限公司（全称）；\n• 类型：增值税普通发票或专用发票均可；\n• 内容：与实际业务一致，不得笼统开「办公用品」；\n• 电子发票需打印并附税控章。",
+    src:"《青禾费用报销规范》第 3 章"
+  },
+  {
+    keys:["时效","多久提交","期限","报销期限","超过"],
+    q:"费用发生后多久内要提交报销？",
+    a:"费用发生后须在 <b>15 个工作日</b>内提交报销申请。跨年度费用最迟于次年 1 月 15 日前提交，逾期原则上不予受理。",
+    src:"《青禾费用报销规范》第 2.1 条"
+  },
+  {
+    keys:["审批","流程","谁批","审批链","几天","多久到账"],
+    q:"报销审批流程是怎样的？多久到账？",
+    a:"审批流程：员工提交 → 部门主管审批 → 财务审核 →（≥5000 元）总经理终审。\n各级审批 SLA 为 2 个工作日；财务审核通过后，款项于次月发薪日统一打款。",
+    src:"《青禾费用报销规范》第 4 章"
+  },
+  {
+    keys:["招待","招待费","客户吃饭","业务招待"],
+    q:"业务招待费能报吗？",
+    a:"业务招待费须事前申请，单次人均不超过 150 元。报销时需注明招待对象、人数、事由，并列明参与人员。",
+    src:"《青禾业务招待费管理办法》第 2 条"
+  }
+];
+
+// 员工（授权身份）
+const EMPLOYEES = [
+  {id:"e001",name:"张晨",dept:"销售部",avatar:"张"},
+  {id:"e002",name:"李婷",dept:"研发部",avatar:"李"},
+  {id:"e003",name:"王磊",dept:"市场部",avatar:"王"}
+];
+
+// 报销单据（mock，按员工分组）
+const EXPENSES = {
+  e001:[
+    {no:"BX20261008-012",type:"差旅费（北京出差）",amount:1860.5,date:"2026-10-08",
+     status:"finance",flow:["已提交","主管审批","财务审核","总经理终审"],cur:2},
+    {no:"BX20260928-007",type:"市内交通（打车）",amount:326.0,date:"2026-09-28",
+     status:"done",flow:["已提交","主管审批","财务审核","已打款"],cur:3},
+    {no:"BX20260915-003",type:"业务招待费（客户餐叙）",amount:680.0,date:"2026-09-15",
+     status:"reject",flow:["已提交","主管审批","财务审核"],cur:1}
+  ],
+  e002:[
+    {no:"BX20261009-001",type:"差旅费（上海出差）",amount:920.0,date:"2026-10-09",
+     status:"pending",flow:["已提交","主管审批","财务审核"],cur:1},
+    {no:"BX20260920-015",type:"办公用品采购",amount:458.9,date:"2026-09-20",
+     status:"done",flow:["已提交","主管审批","财务审核","已打款"],cur:3}
+  ],
+  e003:[
+    {no:"BX20261007-009",type:"活动物料费",amount:5200.0,date:"2026-10-07",
+     status:"gm",flow:["已提交","主管审批","财务审核","总经理终审"],cur:3}
+  ]
+};
+
+const STATUS_MAP = {
+  pending:{label:"待主管审批",cls:"b-pending"},
+  finance:{label:"财务审核中",cls:"b-finance"},
+  gm:{label:"总经理终审中",cls:"b-finance"},
+  done:{label:"已打款完成",cls:"b-done"},
+  reject:{label:"已驳回",cls:"b-reject"}
+};
+
+/* ================= 状态 ================= */
+let currentUser = null; // {id,name,dept,avatar}
+const chatEl = document.getElementById("chat");
+const inputEl = document.getElementById("input");
+
+/* ================= 工具函数 ================= */
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function addMsg(role, html){
+  const div = document.createElement("div");
+  div.className = "msg " + role;
+  const av = role==="bot" ? "禾" : (currentUser?currentUser.avatar:"我");
+  div.innerHTML = `<div class="avatar">${av}</div><div class="bubble">${html}</div>`;
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+  return div;
+}
+function addTyping(){
+  const div = document.createElement("div");
+  div.className = "msg bot";
+  div.id = "typing";
+  div.innerHTML = `<div class="avatar">禾</div><div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div>`;
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+function removeTyping(){const t=document.getElementById("typing");if(t)t.remove();}
+
+/* ================= 意图识别 ================= */
+function detectIntent(text){
+  // 单据查询意图
+  if(/我的|单据|报销单|进度|状态|批到哪|审批到|到账|查一下我|我报/.test(text)){
+    return "expense";
+  }
+  return "policy";
+}
+
+function matchPolicy(text){
+  let best=null,bestScore=0;
+  for(const p of POLICIES){
+    let score=0;
+    for(const k of p.keys){if(text.includes(k)) score++;}
+    if(score>bestScore){bestScore=score;best=p;}
+  }
+  return bestScore>0 ? best : null;
+}
+
+/* ================= 渲染 ================= */
+function renderDocCards(list){
+  let html = `<div style="font-size:13px;color:var(--ink-3);margin-bottom:6px">共 ${list.length} 张单据：</div>`;
+  for(const d of list){
+    const st = STATUS_MAP[d.status];
+    let flowHtml = `<div class="flow">` + d.flow.map((f,i)=>{
+      const on = i<=d.cur ? "on" : "";
+      return `<span class="step ${on}">${f}</span>` + (i<d.flow.length-1?'<span class="arrow">›</span>':'');
+    }).join("") + `</div>`;
+    html += `
+      <div class="doc-card">
+        <div class="doc-row"><span class="v">${d.no}</span><span class="badge ${st.cls}">${st.label}</span></div>
+        <div class="doc-row"><span class="k">类型</span><span class="v">${d.type}</span></div>
+        <div class="doc-row"><span class="k">金额</span><span class="v">¥ ${d.amount.toFixed(2)}</span></div>
+        <div class="doc-row"><span class="k">提交日期</span><span class="v">${d.date}</span></div>
+        ${flowHtml}
+      </div>`;
+  }
+  return html;
+}
+
+function chipsHtml(){
+  const qs = ["出差住宿标准是多少？","市内打车能报销吗？","发票抬头怎么开？","我的报销单批到哪了？"];
+  return `<div class="chips">` + qs.map(q=>`<span class="chip">${q}</span>`).join("") + `</div>`;
+}
+
+/* ================= 回复逻辑 ================= */
+function reply(text){
+  addTyping();
+  setTimeout(()=>{
+    removeTyping();
+    const intent = detectIntent(text);
+
+    if(intent==="expense"){
+      if(!currentUser){
+        addMsg("bot",`查询本人单据前需要授权登录。<br>请点击右上角 <b>「员工登录（授权）」</b>，选择你的员工身份后，我才能查看<b>你本人</b>的报销单状态。<br><span style="font-size:12px;color:var(--ink-3)">（安全设计：未授权状态下助手无法访问任何单据数据）</span>`);
+        return;
+      }
+      const list = EXPENSES[currentUser.id] || [];
+      let head = `${currentUser.name}（${currentUser.dept}），以下是你名下的报销单据：`;
+      addMsg("bot", head + renderDocCards(list));
+      return;
+    }
+
+    // 制度问答
+    const p = matchPolicy(text);
+    if(p){
+      addMsg("bot", p.a.replace(/\n/g,"<br>") + `<div class="src">来源：<b>${p.src}</b></div>`);
+    }else{
+      addMsg("bot",`这个问题我暂时没有匹配到对应制度条款。<br>你可以试试问我：住宿标准、餐补、打车、发票要求、审批流程、报销时效。<br><span style="font-size:12px;color:var(--ink-3)">（Demo：基于内置制度库关键词匹配，生产环境可换成 RAG 向量检索 + 大模型生成）</span>`);
+    }
+  }, 550);
+}
+
+/* ================= 事件绑定 ================= */
+function send(){
+  const v = inputEl.value.trim();
+  if(!v) return;
+  addMsg("user", esc(v));
+  inputEl.value = "";
+  reply(v);
+}
+document.getElementById("sendBtn").onclick = send;
+inputEl.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}});
+chatEl.addEventListener("click",e=>{
+  if(e.target.classList.contains("chip")){
+    const q = e.target.textContent;
+    addMsg("user", esc(q));
+    reply(q);
+  }
+});
+
+/* ================= 登录 ================= */
+const mask = document.getElementById("mask");
+const empListEl = document.getElementById("empList");
+document.getElementById("loginBtn").onclick = ()=>{
+  empListEl.innerHTML = EMPLOYEES.map(e=>
+    `<div class="emp" data-id="${e.id}">
+       <div class="e-avatar">${e.avatar}</div>
+       <div><div class="e-name">${e.name}</div><div class="e-dept">${e.dept}</div></div>
+     </div>`).join("");
+  mask.classList.add("show");
+};
+empListEl.addEventListener("click",e=>{
+  const emp = e.target.closest(".emp");
+  if(!emp) return;
+  const id = emp.dataset.id;
+  currentUser = EMPLOYEES.find(x=>x.id===id);
+  mask.classList.remove("show");
+  document.getElementById("loginBtn").style.display="none";
+  const chip = document.getElementById("userChip");
+  chip.style.display="flex";
+  document.getElementById("userName").textContent = `${currentUser.name} · ${currentUser.dept}`;
+  addMsg("bot",`授权成功。你好，${currentUser.name}！<br>现在可以直接问我"我的报销单批到哪了"，我只展示你本人的单据。`);
+});
+document.getElementById("cancelLogin").onclick = ()=> mask.classList.remove("show");
+document.getElementById("logoutBtn").onclick = ()=>{
+  currentUser = null;
+  document.getElementById("loginBtn").style.display="";
+  document.getElementById("userChip").style.display="none";
+  addMsg("bot","已退出授权，单据查询功能已关闭。");
+};
+
+/* ================= 开场 ================= */
+addMsg("bot",`你好，我是<b>青禾报销助手</b>。我可以帮你：<br>① 查询公司现行报销制度（差旅、餐补、发票、审批流程等）；<br>② 经你授权后，查询<b>本人</b>报销单据的审批进度。<br><br>下面是几个常见问题，点一下试试：` + chipsHtml());
+</script>
+</body>
+</html>
